@@ -89,7 +89,8 @@ public class Window extends javax.swing.JFrame {
         
         if (result == JFileChooser.APPROVE_OPTION) {
             this.file = chooser.getSelectedFile();
-            this.txtDirectory.setText(this.file.getAbsolutePath());
+            String path = this.file.getAbsolutePath();
+            this.txtDirectory.setText(path);
         }
     }//GEN-LAST:event_bBrowseActionPerformed
 
