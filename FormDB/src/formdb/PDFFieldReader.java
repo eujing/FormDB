@@ -18,6 +18,7 @@ public class PDFFieldReader {
     DataField[] dataFields;
     static char[] filter = new char [] {'#', '-', ' ', '+', '?'};
     
+    //Parses a PDF to extract field names and values, storing them in an array of DataField
     public PDFFieldReader (String path) {
         try {
             PdfReader reader = new PdfReader(path);
@@ -29,10 +30,12 @@ public class PDFFieldReader {
             dataFields = new DataField[N];
             int i = 0;
             for ( String s : fieldNames ) {
+                //Replace all invalid characters with _
                 String filteredName = s;
                 for (char c : filter) {
                     filteredName = filteredName.replace(c, '_');
                 }
+                //Wrap name and value into a DataField
                 dataFields[i] = new DataField (filteredName, fields.getField(s), fields.getFieldType(s)==AcroFields.FIELD_TYPE_CHECKBOX);
                 i++;
             }
@@ -41,6 +44,7 @@ public class PDFFieldReader {
         }
     }
     
+    //Retrieve extracted data
     public DataField[] getDataFields () {
         return dataFields;
     }

@@ -1,11 +1,7 @@
 package formdb;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
@@ -15,15 +11,17 @@ public class Window extends javax.swing.JFrame {
     
     private File file;
     private ArrayList<String> tableNames;
-    private String strNewTable = "New...";
+    private final String strNewTable = "New...";
     private SQL sql;
 
     public Window() {
         initComponents();
         try {
+            //Establish SQL connection
             this.sql = new SQL ("root", "admin", "Forms");
         }
         catch (Exception ex) {
+            //Exit if failed
             System.out.println(ex.getMessage());
             System.exit(-1);
         }
@@ -31,6 +29,7 @@ public class Window extends javax.swing.JFrame {
         this.updateTableNames();
     }
     
+    //Updates combobox with all tables found in the database
     private void updateTableNames () {
         this.cbTableName.removeAllItems();
         for (String tableName : this.tableNames) {
@@ -39,6 +38,7 @@ public class Window extends javax.swing.JFrame {
         this.cbTableName.addItem(this.strNewTable);
     }
     
+    //Get path of selected file
     public String getPath(){
         return this.file.getAbsolutePath();
     }
@@ -124,6 +124,7 @@ public class Window extends javax.swing.JFrame {
 
     private void bBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bBrowseActionPerformed
 
+        //File chooser for PDF files only
         JFileChooser chooser = new JFileChooser();
         FileFilter filter = new FileNameExtensionFilter("PDF Document", new String[] {"pdf"});
         chooser.setFileFilter (filter);
@@ -138,21 +139,26 @@ public class Window extends javax.swing.JFrame {
 
     private void bSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bSubmitActionPerformed
 
-        //Parsing and database stuff here
         String tableName = (String) this.cbTableName.getSelectedItem();
         
+        //Create a new table
         if (tableName.equals(this.strNewTable)) {
             tableName = JOptionPane.showInputDialog("Enter new table name:");
             String cmd = SQL.createCommand(tableName, this.getPath()); //Check for duplicate?
-            this.sql.execute(cmd);
-            this.tableNames.add(tableName);
+            if (!this.sql.execute(cmd)) {
+                JOptionPane.showMessageDialog(this, "Table creation Failed!");
+            }
             this.updateTableNames();
         }
         
+        //Insert data into correct table
         String cmd = SQL.insertCommand(tableName, this.getPath());
-        this.sql.execute(cmd);
-        
-        JOptionPane.showMessageDialog(this, "Form submitted!");
+        if (this.sql.execute(cmd)) {
+            JOptionPane.showMessageDialog(this, "Form submitted!");
+        }
+        else {
+            JOptionPane.showMessageDialog(this, "Submition Failed!");
+        }
     }//GEN-LAST:event_bSubmitActionPerformed
 
     /**

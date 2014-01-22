@@ -23,10 +23,12 @@ public class SQL {
     Statement st;
     
     public SQL (String user, String password, String database) throws SQLException {
+        //Set up connection to database with provided credentials
         this.conn = (Connection) DriverManager.getConnection(url + database, user, password);
         this.st = (Statement) this.conn.createStatement();
     }
     
+    //Clean up resources
     public void close () {
         try {
             if (this.st != null) this.st.close();
@@ -37,6 +39,7 @@ public class SQL {
         }
     }
     
+    //Gets a list of all tables in the current database
     public ArrayList<String> getTables () {
         ArrayList<String> tableNames = new ArrayList<>();
         try {
@@ -52,6 +55,7 @@ public class SQL {
         return tableNames;
     }
     
+    //Execute a command on the database
     public boolean execute (String cmd) {
         boolean result = false;
         try {
@@ -64,18 +68,19 @@ public class SQL {
         return result;
     }
     
+    //Creates a command to create a table based on a PDF file
     public static String createCommand(String tableName, String path){
-        
+        //Parse PDF file
         PDFFieldReader reader = new PDFFieldReader(path);
         DataField[] data = reader.getDataFields();
-        String command = "CREATE TABLE " + tableName + "(Number INTEGER NOT NULL AUTO_INCREMENT,\n";
         
-        for (int i = 0; i < data.length; i++) {
-            if(data[i].isBoolean()){
-                command += data[i].getFieldName() + " BOOLEAN,\n";
-            }
-            else{
-                command += data[i].getFieldName() + " VARCHAR(255),\n";
+        String command = "CREATE TABLE " + tableName + "(Number INTEGER NOT NULL AUTO_INCREMENT,\n";
+        //Append each field name as the column name
+        for (DataField field : data) {
+            if (field.isBoolean()) {
+                command += field.getFieldName() + " BOOLEAN,\n";
+            } else {
+                command += field.getFieldName() + " VARCHAR(255),\n";
             }
         }
         
@@ -84,12 +89,14 @@ public class SQL {
         return command;
     }
     
+    //Creates a command to insert field values into a table
     public static String insertCommand(String tableName, String path){
-        
+        //Parse PDF file
         PDFFieldReader reader = new PDFFieldReader(path);
         DataField[] data = reader.getDataFields();
-        String command = "INSERT INTO " + tableName + " (";
         
+        String command = "INSERT INTO " + tableName + " (";
+        //Append field names in order
         for (int i = 0; i < data.length; i++) {
             command += data[i].getFieldName();
             if (i < data.length - 1) {
@@ -99,9 +106,10 @@ public class SQL {
         
         command += ") VALUES (";
         boolean temp;
-        
+        //Append field values in order
         for (int i = 0; i < data.length; i++) {
             if (data[i].isBoolean()) {
+                //Convert yes/no to true/false
                 if(data[i].getFieldValue().equalsIgnoreCase("yes"))
                     temp = true;
                 else
