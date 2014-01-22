@@ -9,6 +9,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class Window extends javax.swing.JFrame {
     
     private File file;
+    static String path;
 
     public Window() {
         initComponents();
@@ -89,7 +90,7 @@ public class Window extends javax.swing.JFrame {
         
         if (result == JFileChooser.APPROVE_OPTION) {
             this.file = chooser.getSelectedFile();
-            String path = this.file.getAbsolutePath();
+            path = this.file.getAbsolutePath();
             this.txtDirectory.setText(path);
         }
     }//GEN-LAST:event_bBrowseActionPerformed
@@ -100,6 +101,9 @@ public class Window extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "Form submitted");
     }//GEN-LAST:event_bSubmitActionPerformed
 
+    public static String getPath(){
+        return path;
+    }
     /**
      * @param args the command line arguments
      */
