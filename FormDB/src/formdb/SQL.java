@@ -32,6 +32,7 @@ public class SQL {
         
         command += "PRIMARY KEY (Number)";
         
+        
         return command;
     }
     
