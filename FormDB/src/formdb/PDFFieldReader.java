@@ -16,6 +16,7 @@ import java.util.Set;
 public class PDFFieldReader {
     
     DataField[] dataFields;
+    static char[] filter = new char [] {'#', '-', ' ', '+', '?'};
     
     public PDFFieldReader (String path) {
         try {
@@ -28,7 +29,11 @@ public class PDFFieldReader {
             dataFields = new DataField[N];
             int i = 0;
             for ( String s : fieldNames ) {
-                dataFields[i] = new DataField (s,fields.getField(s),fields.getFieldType(s)==AcroFields.FIELD_TYPE_CHECKBOX);
+                String filteredName = s;
+                for (char c : filter) {
+                    filteredName = filteredName.replace(c, '_');
+                }
+                dataFields[i] = new DataField (filteredName, fields.getField(s), fields.getFieldType(s)==AcroFields.FIELD_TYPE_CHECKBOX);
                 i++;
             }
         } catch (IOException ex) {

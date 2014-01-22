@@ -1,6 +1,11 @@
 package formdb;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Scanner;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
@@ -9,10 +14,33 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class Window extends javax.swing.JFrame {
     
     private File file;
-    static String path;
+    private ArrayList<String> tableNames;
+    private String strNewTable = "New...";
+    private SQL sql;
 
     public Window() {
         initComponents();
+        try {
+            this.sql = new SQL ("root", "admin", "Forms");
+        }
+        catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            System.exit(-1);
+        }
+        this.tableNames = this.sql.getTables();
+        this.updateTableNames();
+    }
+    
+    private void updateTableNames () {
+        this.cbTableName.removeAllItems();
+        for (String tableName : this.tableNames) {
+            this.cbTableName.addItem(tableName);
+        }
+        this.cbTableName.addItem(this.strNewTable);
+    }
+    
+    public String getPath(){
+        return this.file.getAbsolutePath();
     }
 
     /**
@@ -28,6 +56,8 @@ public class Window extends javax.swing.JFrame {
         txtDirectory = new javax.swing.JTextField();
         bBrowse = new javax.swing.JButton();
         bSubmit = new javax.swing.JButton();
+        lTableName = new javax.swing.JLabel();
+        cbTableName = new javax.swing.JComboBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Form Database");
@@ -50,19 +80,27 @@ public class Window extends javax.swing.JFrame {
             }
         });
 
+        lTableName.setText("Table Name");
+
+        cbTableName.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lFormDir)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lTableName)
+                    .addComponent(lFormDir))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtDirectory, javax.swing.GroupLayout.PREFERRED_SIZE, 344, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txtDirectory, javax.swing.GroupLayout.DEFAULT_SIZE, 344, Short.MAX_VALUE)
+                    .addComponent(cbTableName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bBrowse)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bSubmit)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(bBrowse, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(bSubmit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -72,7 +110,11 @@ public class Window extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lFormDir)
                     .addComponent(txtDirectory, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bBrowse)
+                    .addComponent(bBrowse))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lTableName)
+                    .addComponent(cbTableName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(bSubmit))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -90,20 +132,29 @@ public class Window extends javax.swing.JFrame {
         
         if (result == JFileChooser.APPROVE_OPTION) {
             this.file = chooser.getSelectedFile();
-            path = this.file.getAbsolutePath();
-            this.txtDirectory.setText(path);
+            this.txtDirectory.setText(this.getPath());
         }
     }//GEN-LAST:event_bBrowseActionPerformed
 
     private void bSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bSubmitActionPerformed
 
         //Parsing and database stuff here
-        JOptionPane.showMessageDialog(this, "Form submitted");
+        String tableName = (String) this.cbTableName.getSelectedItem();
+        
+        if (tableName.equals(this.strNewTable)) {
+            tableName = JOptionPane.showInputDialog("Enter new table name:");
+            String cmd = SQL.createCommand(tableName, this.getPath()); //Check for duplicate?
+            this.sql.execute(cmd);
+            this.tableNames.add(tableName);
+            this.updateTableNames();
+        }
+        
+        String cmd = SQL.insertCommand(tableName, this.getPath());
+        this.sql.execute(cmd);
+        
+        JOptionPane.showMessageDialog(this, "Form submitted!");
     }//GEN-LAST:event_bSubmitActionPerformed
 
-    public static String getPath(){
-        return path;
-    }
     /**
      * @param args the command line arguments
      */
@@ -142,7 +193,9 @@ public class Window extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bBrowse;
     private javax.swing.JButton bSubmit;
+    private javax.swing.JComboBox cbTableName;
     private javax.swing.JLabel lFormDir;
+    private javax.swing.JLabel lTableName;
     private javax.swing.JTextField txtDirectory;
     // End of variables declaration//GEN-END:variables
 }
