@@ -56,16 +56,14 @@ public class SQL {
     }
     
     //Execute a command on the database
-    public boolean execute (String cmd) {
-        boolean result = false;
+    public void execute (String cmd) throws SQLException {
         try {
-            result = this.st.execute(cmd);
+            this.st.execute(cmd);
         }
         catch (SQLException ex) {
             System.out.println(ex.getMessage());
-            System.out.println(cmd);
+            throw ex;
         }
-        return result;
     }
     
     //Creates a command to create a table based on a PDF file

@@ -1,32 +1,65 @@
 package formdb;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 public class Window extends javax.swing.JFrame {
     
     private File file;
     private ArrayList<String> tableNames;
     private final String strNewTable = "New...";
+    private final String configFile = "dbCredentials.xml";
     private SQL sql;
 
     public Window() {
         initComponents();
         try {
+            //Get credentials from XML file
+            Document doc = readXMLFile (configFile);
+            
             //Establish SQL connection
-            this.sql = new SQL ("root", "admin", "Forms");
+            String user = doc.getElementsByTagName("user").item(0).getTextContent();
+            String password = doc.getElementsByTagName("password").item(0).getTextContent();
+            System.out.println(user);
+            System.out.println(password);
+            this.sql = new SQL (user, password, "Forms");
         }
-        catch (Exception ex) {
+        catch (DOMException | SQLException ex) {
             //Exit if failed
             System.out.println(ex.getMessage());
             System.exit(-1);
         }
         this.tableNames = this.sql.getTables();
         this.updateTableNames();
+    }
+    
+    //Read XML file
+    private Document readXMLFile(String fName) {
+        try {
+            File xmlFile = new File(fName);
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(xmlFile);
+            
+            return doc;
+        }
+        catch (IOException | ParserConfigurationException | SAXException ex) {
+            System.out.println(ex.getMessage());
+            
+            return null;
+        }
     }
     
     //Updates combobox with all tables found in the database
@@ -145,20 +178,26 @@ public class Window extends javax.swing.JFrame {
         if (tableName.equals(this.strNewTable)) {
             tableName = JOptionPane.showInputDialog("Enter new table name:");
             String cmd = SQL.createCommand(tableName, this.getPath()); //Check for duplicate?
-            if (!this.sql.execute(cmd)) {
+            try {
+                this.sql.execute(cmd);
+            }
+            catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Table creation Failed!");
             }
-            this.updateTableNames();
+            finally {
+                this.updateTableNames();
+            }         
         }
         
         //Insert data into correct table
         String cmd = SQL.insertCommand(tableName, this.getPath());
-        if (this.sql.execute(cmd)) {
-            JOptionPane.showMessageDialog(this, "Form submitted!");
+        try {
+            this.sql.execute(cmd);
         }
-        else {
+        catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Submition Failed!");
         }
+        JOptionPane.showMessageDialog(this, "Form submitted!");
     }//GEN-LAST:event_bSubmitActionPerformed
 
     /**
